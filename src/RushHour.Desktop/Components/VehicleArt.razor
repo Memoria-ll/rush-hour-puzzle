@@ -1,0 +1,206 @@
+@using RushHour.Core
+@*
+    車両アート。内部では必ず「進行方向 = X 軸（右が前）」の水平レイアウトで描き、
+    縦向きの車両は SVG の rotate(90) で見た目だけ回転させる（盤面や DOM は軸平行のまま）。
+    座標系は 1 マス = 100 ユニット。すべて整数で書き出すのでカルチャ依存はない。
+*@
+@{
+    var v = Vehicle;
+    var horizontal = v.Axis == Axis.Horizontal;
+    var length = horizontal ? v.Width : v.Height;   // 進行方向のマス数
+    var breadth = horizontal ? v.Height : v.Width;  // 幅方向のマス数
+    var w = length * 100;
+    var h = breadth * 100;
+    var square = v.Kind == VehicleKind.Excavator;
+    // 車・トラック・トレーラーは幅 1 マス想定。念のため帯の中央に寄せて描く。
+    var band = square ? 0 : (breadth - 1) * 50;
+    var cy = square ? h / 2 : 50;
+    var viewBox = horizontal ? $"0 0 {w} {h}" : $"0 0 {h} {w}";
+    var frame = horizontal ? "translate(0 0)" : $"rotate(90) translate(0 -{h})";
+    var arrowPath = v.IsTarget
+        ? "M-20-12L-8 0-20 12M-2-12L10 0-2 12"
+        : "M-18-11L-28 0-18 11M18-11L28 0 18 11";
+    var arrowScale = square ? "1.35" : ".85";
+    var arrowX = w / 2;
+    var arrowY = cy;
+
+    // トラック／トレーラーは荷台の中央に矢印を置く
+    var cabWidth = 90;
+    var cabX = w - 10 - cabWidth;
+    var boxEnd = cabX - 14;
+    if (v.Kind == VehicleKind.Truck) { arrowX = 104; }
+    if (v.Kind == VehicleKind.Trailer) { arrowX = (10 + boxEnd) / 2; }
+
+    // ショベルカー各部
+    var track = h * 24 / 100;
+    var trackBottom = h - 8 - track;
+    var trackEnd = w * 70 / 100;
+    var houseX = 24;
+    var houseW = w * 58 / 100 - houseX;
+    var houseY = track + 16;
+    var houseH = h - 2 * houseY;
+    var glassX = houseX + houseW * 44 / 100;
+    var glassW = houseW * 46 / 100;
+    var glassY = houseY + houseH * 16 / 100;
+    var glassH = houseH * 68 / 100;
+    var boomX = houseX + houseW;
+    var boomTip = w - 16;
+    var boomMid = boomX + (boomTip - boomX) * 52 / 100;
+    if (square) { arrowX = houseX + houseW / 2; }
+    var artClass = v.IsTarget ? "vehicle-art is-hero" : "vehicle-art";
+}
+<svg class="@artClass" viewBox="@viewBox" style="--c:@v.Color" aria-hidden="true" focusable="false">
+    <g transform="@frame">
+        <g transform="translate(0 @band)">
+            @if (v.IsTarget)
+            {
+                @* 赤いスポーツカー：低く構えた車体、キャノピー、レーシングストライプ、リアウイング *@
+                <rect class="va-tyre" x="32" y="1" width="48" height="18" rx="7" />
+                <rect class="va-tyre" x="32" y="81" width="48" height="18" rx="7" />
+                <rect class="va-tyre" x="130" y="2" width="44" height="16" rx="6" />
+                <rect class="va-tyre" x="130" y="82" width="44" height="16" rx="6" />
+                <rect class="va-tyre-top" x="38" y="3" width="36" height="4" rx="2" />
+                <rect class="va-tyre-top" x="135" y="4" width="33" height="4" rx="2" />
+                <rect class="va-deep" x="8" y="16" width="14" height="68" rx="5" />
+                <rect class="va-gloss" x="10" y="19" width="5" height="62" rx="3" />
+                <path class="va-base" d="M36 12 L140 12 C168 14 188 28 197 47 L197 53 C188 72 168 86 140 88 L36 88 C24 86 18 78 18 50 C18 22 24 14 36 12 Z" />
+                <rect class="va-gloss" x="48" y="42" width="128" height="6" rx="3" />
+                <rect class="va-gloss" x="48" y="53" width="120" height="6" rx="3" />
+                <path class="va-deep" d="M152 36 h26 a4 4 0 0 1 0 8 h-26 z" />
+                <path class="va-deep" d="M152 56 h26 a4 4 0 0 1 0 8 h-26 z" />
+                <path class="va-glass" d="M82 26 C100 21 120 24 132 33 L138 50 L132 67 C120 76 100 79 82 74 Z" />
+                <path class="va-glint" d="M90 30 C104 26 118 28 127 34 L120 38 C110 33 99 32 88 35 Z" />
+                <rect class="va-lamp" x="180" y="32" width="13" height="10" rx="4" />
+                <rect class="va-lamp" x="180" y="58" width="13" height="10" rx="4" />
+                <rect class="va-tail" x="20" y="40" width="8" height="20" rx="3" />
+                <path class="va-shade" d="M36 12 L140 12 C168 14 188 28 197 47 L197 53 C188 72 168 86 140 88 L36 88 C24 86 18 78 18 50 C18 22 24 14 36 12 Z" />
+                <path class="va-edge" d="M36 12 L140 12 C168 14 188 28 197 47 L197 53 C188 72 168 86 140 88 L36 88 C24 86 18 78 18 50 C18 22 24 14 36 12 Z" />
+                <rect class="va-gloss" x="42" y="16" width="96" height="5" rx="3" />
+            }
+            else if (v.Kind == VehicleKind.Car)
+            {
+                @* 乗用車：ルーフ＋前後ガラス＋ボンネットの折り目 *@
+                <rect class="va-tyre" x="34" y="3" width="44" height="16" rx="6" />
+                <rect class="va-tyre" x="34" y="81" width="44" height="16" rx="6" />
+                <rect class="va-tyre" x="126" y="3" width="42" height="16" rx="6" />
+                <rect class="va-tyre" x="126" y="81" width="42" height="16" rx="6" />
+                <rect class="va-tyre-top" x="39" y="5" width="33" height="4" rx="2" />
+                <rect class="va-tyre-top" x="131" y="5" width="31" height="4" rx="2" />
+                <path class="va-base" d="M38 12 L152 12 C174 12 190 22 195 38 C197 45 197 55 195 62 C190 78 174 88 152 88 L38 88 C26 88 19 81 19 68 L19 32 C19 19 26 12 38 12 Z" />
+                <rect class="va-base" x="108" y="5" width="13" height="9" rx="3" />
+                <rect class="va-base" x="108" y="86" width="13" height="9" rx="3" />
+                <path class="va-glass" d="M128 24 L150 34 L150 66 L128 76 Z" />
+                <path class="va-glass" d="M74 26 L58 36 L58 64 L74 74 Z" />
+                <rect class="va-light" x="74" y="22" width="56" height="56" rx="14" />
+                <rect class="va-gloss" x="80" y="26" width="44" height="5" rx="3" />
+                <path class="va-line" d="M154 34 h32 M154 66 h32" />
+                <rect class="va-lamp" x="176" y="26" width="14" height="11" rx="4" />
+                <rect class="va-lamp" x="176" y="63" width="14" height="11" rx="4" />
+                <rect class="va-tail" x="21" y="26" width="9" height="12" rx="3" />
+                <rect class="va-tail" x="21" y="62" width="9" height="12" rx="3" />
+                <path class="va-shade" d="M38 12 L152 12 C174 12 190 22 195 38 C197 45 197 55 195 62 C190 78 174 88 152 88 L38 88 C26 88 19 81 19 68 L19 32 C19 19 26 12 38 12 Z" />
+                <path class="va-edge" d="M38 12 L152 12 C174 12 190 22 195 38 C197 45 197 55 195 62 C190 78 174 88 152 88 L38 88 C26 88 19 81 19 68 L19 32 C19 19 26 12 38 12 Z" />
+                <rect class="va-gloss" x="44" y="16" width="104" height="5" rx="3" />
+            }
+            else if (v.Kind == VehicleKind.Truck)
+            {
+                @* トラック：後方に白い箱型荷台、前方にカラーキャブ *@
+                <rect class="va-tyre" x="34" y="2" width="46" height="17" rx="6" />
+                <rect class="va-tyre" x="34" y="81" width="46" height="17" rx="6" />
+                <rect class="va-tyre" x="94" y="2" width="44" height="17" rx="6" />
+                <rect class="va-tyre" x="94" y="81" width="44" height="17" rx="6" />
+                <rect class="va-tyre" x="224" y="3" width="44" height="16" rx="6" />
+                <rect class="va-tyre" x="224" y="81" width="44" height="16" rx="6" />
+                <rect class="va-tyre-top" x="39" y="4" width="36" height="4" rx="2" />
+                <rect class="va-tyre-top" x="99" y="4" width="34" height="4" rx="2" />
+                <rect class="va-tyre-top" x="229" y="5" width="34" height="4" rx="2" />
+                <rect class="va-deep" x="186" y="38" width="34" height="24" rx="6" />
+                <rect class="va-pale" x="12" y="10" width="184" height="80" rx="11" />
+                <rect class="va-rib" x="40" y="16" width="5" height="68" rx="2" />
+                <rect class="va-rib" x="78" y="16" width="5" height="68" rx="2" />
+                <rect class="va-rib" x="116" y="16" width="5" height="68" rx="2" />
+                <rect class="va-rib" x="154" y="16" width="5" height="68" rx="2" />
+                <rect class="va-base" x="12" y="44" width="184" height="12" />
+                <rect class="va-gloss" x="22" y="15" width="164" height="6" rx="3" />
+                <rect class="va-shade" x="12" y="10" width="184" height="80" rx="11" />
+                <rect class="va-edge" x="12" y="10" width="184" height="80" rx="11" />
+                <rect class="va-base" x="206" y="12" width="86" height="76" rx="16" />
+                <rect class="va-base" x="208" y="5" width="13" height="9" rx="3" />
+                <rect class="va-base" x="208" y="86" width="13" height="9" rx="3" />
+                <path class="va-glass" d="M262 20 L286 32 L286 68 L262 80 Z" />
+                <rect class="va-gloss" x="212" y="17" width="44" height="5" rx="3" />
+                <rect class="va-lamp" x="282" y="22" width="10" height="10" rx="3" />
+                <rect class="va-lamp" x="282" y="68" width="10" height="10" rx="3" />
+                <rect class="va-shade" x="206" y="12" width="86" height="76" rx="16" />
+                <rect class="va-edge" x="206" y="12" width="86" height="76" rx="16" />
+            }
+            else if (v.Kind == VehicleKind.Trailer)
+            {
+                @* トレーラー：長い荷台＋連結部＋前方キャブ。長さは可変。 *@
+                <rect class="va-tyre" x="28" y="2" width="46" height="17" rx="6" />
+                <rect class="va-tyre" x="28" y="81" width="46" height="17" rx="6" />
+                <rect class="va-tyre" x="84" y="2" width="46" height="17" rx="6" />
+                <rect class="va-tyre" x="84" y="81" width="46" height="17" rx="6" />
+                <rect class="va-tyre" x="@(cabX + 12)" y="3" width="42" height="16" rx="6" />
+                <rect class="va-tyre" x="@(cabX + 12)" y="81" width="42" height="16" rx="6" />
+                <rect class="va-tyre-top" x="33" y="4" width="36" height="4" rx="2" />
+                <rect class="va-tyre-top" x="89" y="4" width="36" height="4" rx="2" />
+                <rect class="va-tyre-top" x="@(cabX + 17)" y="5" width="32" height="4" rx="2" />
+                <rect class="va-deep" x="@(boxEnd - 6)" y="42" width="26" height="16" rx="6" />
+                <rect class="va-pale" x="10" y="9" width="@(boxEnd - 10)" height="82" rx="12" />
+                @for (var rib = 36; rib < boxEnd - 24; rib += 40)
+                {
+                    <rect class="va-rib" x="@rib" y="15" width="5" height="70" rx="2" />
+                }
+                <rect class="va-base" x="10" y="20" width="@(boxEnd - 10)" height="10" />
+                <rect class="va-base" x="10" y="70" width="@(boxEnd - 10)" height="10" />
+                <rect class="va-gloss" x="22" y="14" width="@(boxEnd - 42)" height="6" rx="3" />
+                <rect class="va-shade" x="10" y="9" width="@(boxEnd - 10)" height="82" rx="12" />
+                <rect class="va-edge" x="10" y="9" width="@(boxEnd - 10)" height="82" rx="12" />
+                <rect class="va-base" x="@cabX" y="12" width="@cabWidth" height="76" rx="16" />
+                <rect class="va-base" x="@(cabX + 2)" y="5" width="11" height="9" rx="3" />
+                <rect class="va-base" x="@(cabX + 2)" y="86" width="11" height="9" rx="3" />
+                <path class="va-glass" d="M@(cabX + 56) 20 L@(cabX + 80) 32 L@(cabX + 80) 68 L@(cabX + 56) 80 Z" />
+                <rect class="va-gloss" x="@(cabX + 8)" y="17" width="44" height="5" rx="3" />
+                <rect class="va-lamp" x="@(cabX + 76)" y="22" width="10" height="10" rx="3" />
+                <rect class="va-lamp" x="@(cabX + 76)" y="68" width="10" height="10" rx="3" />
+                <rect class="va-shade" x="@cabX" y="12" width="@cabWidth" height="76" rx="16" />
+                <rect class="va-edge" x="@cabX" y="12" width="@cabWidth" height="76" rx="16" />
+            }
+            else
+            {
+                @* ショベルカー：左右のクローラー、旋回体、ブーム＋バケット *@
+                <rect class="va-track" x="12" y="8" width="@(trackEnd - 12)" height="@track" rx="@(track / 3)" />
+                <rect class="va-track" x="12" y="@trackBottom" width="@(trackEnd - 12)" height="@track" rx="@(track / 3)" />
+                <line class="va-tread" x1="20" y1="@(8 + track / 2)" x2="@(trackEnd - 8)" y2="@(8 + track / 2)" stroke-width="@(track * 60 / 100)" />
+                <line class="va-tread" x1="20" y1="@(trackBottom + track / 2)" x2="@(trackEnd - 8)" y2="@(trackBottom + track / 2)" stroke-width="@(track * 60 / 100)" />
+                <rect class="va-tyre-top" x="20" y="11" width="@(trackEnd - 32)" height="4" rx="2" />
+                <rect class="va-tyre-top" x="20" y="@(trackBottom + 3)" width="@(trackEnd - 32)" height="4" rx="2" />
+                <rect class="va-deep" x="@(houseX - 8)" y="@(houseY + 6)" width="26" height="@(houseH - 12)" rx="8" />
+                <rect class="va-base" x="@houseX" y="@houseY" width="@houseW" height="@houseH" rx="16" />
+                <rect class="va-gloss" x="@(houseX + 10)" y="@(houseY + 6)" width="@(houseW * 55 / 100)" height="6" rx="3" />
+                <rect class="va-dark" x="@(houseX + 6)" y="@(houseY + houseH * 38 / 100)" width="@(houseW * 30 / 100)" height="@(houseH * 24 / 100)" rx="5" />
+                <rect class="va-glass" x="@glassX" y="@glassY" width="@glassW" height="@glassH" rx="9" />
+                <rect class="va-glint" x="@(glassX + 5)" y="@(glassY + 5)" width="@(glassW - 20)" height="6" rx="3" />
+                <rect class="va-shade" x="@houseX" y="@houseY" width="@houseW" height="@houseH" rx="16" />
+                <rect class="va-edge" x="@houseX" y="@houseY" width="@houseW" height="@houseH" rx="16" />
+                <polygon class="va-steel" points="@boomX,@(cy - 24) @boomMid,@(cy - 14) @boomMid,@(cy + 14) @boomX,@(cy + 24)" />
+                <polygon class="va-steel-d" points="@boomX,@(cy + 10) @boomMid,@(cy + 6) @boomMid,@(cy + 14) @boomX,@(cy + 24)" />
+                <circle class="va-deep" cx="@(boomX + 6)" cy="@cy" r="7" />
+                <path class="va-steel-d" d="M@(boomMid - 6) @(cy - 26) L@(boomTip - 6) @(cy - 19) Q@(boomTip + 4) @cy @(boomTip - 6) @(cy + 19) L@(boomMid - 6) @(cy + 26) Z" />
+                <path class="va-gloss" d="M@(boomMid - 2) @(cy - 22) L@(boomTip - 10) @(cy - 16) L@(boomTip - 10) @(cy - 9) L@(boomMid - 2) @(cy - 13) Z" />
+                <rect class="va-deep" x="@(boomTip - 2)" y="@(cy - 16)" width="7" height="8" rx="2" />
+                <rect class="va-deep" x="@(boomTip - 2)" y="@(cy - 4)" width="7" height="8" rx="2" />
+                <rect class="va-deep" x="@(boomTip - 2)" y="@(cy + 8)" width="7" height="8" rx="2" />
+            }
+            <g class="va-arrow" transform="translate(@arrowX @arrowY) scale(@arrowScale)">
+                <path class="b" d="@arrowPath" />
+                <path class="f" d="@arrowPath" />
+            </g>
+        </g>
+    </g>
+</svg>
+
+@code {
+    [Parameter] public Vehicle Vehicle { get; set; } = default!;
+}

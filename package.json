@@ -1,0 +1,10 @@
+{
+  "name": "rush-hour-garage",
+  "private": true,
+  "scripts": {
+    "test:web": "node tests/web.test.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

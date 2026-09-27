@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ef7d24" />
+    <meta name="description" content="車をスライドして赤い車を出口へ。6×6から12×12まで遊べるラッシュアワー・パズル。" />
+    <title>Rush Hour Garage</title>
+    <base href="./" />
+    <link rel="stylesheet" href="app.css" />
+    <link rel="stylesheet" href="web.css" />
+</head>
+<body>
+    <div id="app">
+        <div class="boot" role="status">
+            <div class="boot-card">
+                <p class="boot-brand">RUSH HOUR <span>GARAGE</span></p>
+                <div class="boot-road" aria-hidden="true"><span class="boot-car"></span></div>
+                <p class="boot-text">ガレージを開けています…<br />初回はダウンロードに少し時間がかかります。</p>
+            </div>
+        </div>
+    </div>
+    <noscript>このゲームを遊ぶにはJavaScriptを有効にしてください。</noscript>
+    <div id="blazor-error-ui" role="alert">
+        <span class="err-text">読み込みに失敗しました。接続を確認して再読み込みしてください。</span>
+        <a href="" class="reload">再読み込み</a>
+    </div>
+    <script src="drag.js"></script>
+    <script src="_framework/blazor.webassembly.js" autostart="false"></script>
+    <script src="boot.js"></script>
+</body>
+</html>

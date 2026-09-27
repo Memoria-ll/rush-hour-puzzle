@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType><TargetFramework>net8.0-windows</TargetFramework><UseWPF>true</UseWPF>
+    <RootNamespace>RushHour.Desktop</RootNamespace><AssemblyName>RushHourGarage</AssemblyName>
+    <EnableDefaultCssItems>false</EnableDefaultCssItems><Version>1.0.1</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../RushHour.Core/RushHour.Core.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Wpf" Version="8.0.100" />
+    <Content Update="wwwroot\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="false" />
+    <EmbeddedResource Include="wwwroot\**" />
+  </ItemGroup>
+</Project>

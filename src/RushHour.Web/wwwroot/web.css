@@ -1,0 +1,22 @@
+/* The desktop layout stays intact on wide screens; narrow browsers scroll vertically. */
+@media (max-width: 720px) {
+    html, body { height: auto; min-height: 100%; overflow: auto; }
+    #app { height: auto; min-height: 100dvh; }
+    .boot { min-height: 100dvh; }
+    .app { height: auto; min-height: 100dvh; grid-template-rows: auto 1fr auto; padding: 12px; }
+    .topbar { flex-wrap: wrap; gap: 10px; }
+    .brand-text strong { font-size: 14px; }
+    .topbar-right { width: 100%; justify-content: flex-end; }
+    .layout { display: flex; flex-direction: column; gap: 20px; }
+    .stage { order: -1; container-type: inline-size; padding: 6px 28px 6px 0; }
+    .board-shell { width: 100%; max-width: 560px; }
+    .panel { overflow: visible; padding: 0; }
+    .score-v { font-size: 26px; }
+    .field input, .field select { font-size: 16px; }
+    .field-help { display: block; }
+    .footbar-goal { margin-left: 0; }
+    .win-card { padding: 12px; }
+    .win-card h2 { font-size: 22px; }
+    .win-stats { margin: 6px 0; padding: 5px 0; }
+    .win-actions { margin-top: 6px; }
+}

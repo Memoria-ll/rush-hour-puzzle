@@ -1,0 +1,5 @@
+<Window x:Class="RushHour.Desktop.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:blazor="clr-namespace:Microsoft.AspNetCore.Components.WebView.Wpf;assembly=Microsoft.AspNetCore.Components.WebView.Wpf" xmlns:local="clr-namespace:RushHour.Desktop" xmlns:components="clr-namespace:RushHour.Desktop.Components" Title="Rush Hour Garage" Width="1240" Height="880" MinWidth="850" MinHeight="650" WindowStartupLocation="CenterScreen" Background="#f6f3ed">
+  <local:EmbeddedBlazorWebView x:Name="WebView" HostPage="wwwroot\index.html">
+    <blazor:BlazorWebView.RootComponents><blazor:RootComponent Selector="#app" ComponentType="{x:Type components:Game}" /></blazor:BlazorWebView.RootComponents>
+  </local:EmbeddedBlazorWebView>
+</Window>

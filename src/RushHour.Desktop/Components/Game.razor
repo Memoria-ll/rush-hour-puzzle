@@ -1,0 +1,241 @@
+@using RushHour.Core
+@{
+    var board = Board;
+    var locked = IsBusy || Won;
+}
+
+@* 車両アートが共有する SVG グラデーション。色は各 SVG の --c から取るのでここは無彩色のみ。 *@
+<svg class="svg-defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+        <linearGradient id="va-shade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffffff" stop-opacity=".40" />
+            <stop offset=".32" stop-color="#ffffff" stop-opacity=".07" />
+            <stop offset=".60" stop-color="#000000" stop-opacity=".05" />
+            <stop offset="1" stop-color="#000000" stop-opacity=".34" />
+        </linearGradient>
+        <linearGradient id="va-glass" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#9fb3c8" />
+            <stop offset=".38" stop-color="#3b4755" />
+            <stop offset="1" stop-color="#1b2028" />
+        </linearGradient>
+    </defs>
+</svg>
+
+<div class="app">
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 40 40">
+                    <rect x="2" y="2" width="36" height="36" rx="11" fill="#23262d" />
+                    <rect x="7" y="16" width="26" height="8" rx="4" fill="#ef7d24" />
+                    <rect x="11" y="9" width="7" height="6" rx="2" fill="#f4e7d2" />
+                    <rect x="22" y="25" width="7" height="6" rx="2" fill="#f4e7d2" />
+                </svg>
+            </span>
+            <span class="brand-text">
+                <strong>RUSH HOUR <em>GARAGE</em></strong>
+                <small>ラッシュアワー・ガレージ ／ 車庫入れパズル</small>
+            </span>
+        </div>
+        <div class="topbar-right">
+            <span class="badge">@(OperatingSystem.IsBrowser() ? "BROWSER" : "OFFLINE")</span>
+            <span class="badge badge-ghost">@(OperatingSystem.IsBrowser() ? "WEB" : "DESKTOP")</span>
+            <button type="button" class="btn btn-quiet" @onclick="ToggleHelp" aria-expanded="@(ShowHelp ? "true" : "false")">遊び方</button>
+        </div>
+    </header>
+
+    <main class="layout">
+        <aside class="panel">
+            <section class="card scoreboard" aria-label="進行状況">
+                <div class="score">
+                    <span class="score-k">手数</span>
+                    <span class="score-v">@Moves</span>
+                </div>
+                <div class="score">
+                    <span class="score-k">時間</span>
+                    <span class="score-v">@ElapsedText</span>
+                </div>
+                <div class="score score-best">
+                    <span class="score-k">最短</span>
+                    <span class="score-v">@(board is null ? "—" : BestMoves.ToString())</span>
+                </div>
+            </section>
+
+            <p class="status @(Won ? "is-win" : null)" role="status">@Status</p>
+
+            <div class="actions">
+                <button type="button" class="btn btn-primary" @onclick="NewGame" disabled="@IsBusy">新しいパズル</button>
+                <div class="actions-row">
+                    <button type="button" class="btn" @onclick="Undo" disabled="@(IsBusy || Moves == 0)">一手戻す</button>
+                    <button type="button" class="btn" @onclick="Restart" disabled="@(IsBusy || board is null || (Moves == 0 && !Won))">やり直す</button>
+                </div>
+                <button type="button" class="btn btn-hint" @onclick="Hint" disabled="@(IsBusy || Won || board is null)">ヒント</button>
+            </div>
+
+            @if (HintVisible && HintText is not null)
+            {
+                <p class="note note-hint">@HintText</p>
+            }
+            @if (Error is not null)
+            {
+                <p class="note note-error" role="alert">@Error</p>
+            }
+
+            <section class="card settings">
+                <h2 class="card-title">設定</h2>
+                <label class="field">
+                    <span class="field-k">盤面サイズ</span>
+                    <span class="select">
+                        <select @bind="SelectedSize" disabled="@IsBusy">
+                            @for (var n = 6; n <= 12; n++)
+                            {
+                                <option value="@n">@n × @n</option>
+                            }
+                        </select>
+                    </span>
+                </label>
+                <label class="field">
+                    <span class="field-k">難易度</span>
+                    <span class="select">
+                        <select @bind="SelectedDifficulty" disabled="@IsBusy">
+                            <option value="@Difficulty.Easy">やさしい</option>
+                            <option value="@Difficulty.Normal">ふつう</option>
+                            <option value="@Difficulty.Hard">むずかしい</option>
+                            <option value="@Difficulty.Expert">エキスパート</option>
+                        </select>
+                    </span>
+                </label>
+                <label class="field">
+                    <span class="field-k">シード<small>任意</small></span>
+                    <input type="text" inputmode="numeric" maxlength="10" placeholder="空欄ならランダム"
+                           @bind="SeedText" @bind:event="oninput" disabled="@IsBusy" />
+                </label>
+                <p class="field-help">同じシードを入れると、まったく同じ盤面をもう一度遊べます。設定は「新しいパズル」で反映されます。</p>
+            </section>
+
+            <dl class="meta">
+                <div><dt>難易度</dt><dd>@DifficultyLabel</dd></div>
+                <div><dt>盤面</dt><dd>@(board is null ? "—" : $"{board.Size} × {board.Size}")</dd></div>
+                <div><dt>コード</dt><dd class="mono">@PuzzleCode</dd></div>
+            </dl>
+        </aside>
+
+        <section class="stage">
+            <div class="board-shell @(Won ? "is-won" : null)">
+                @if (board is not null)
+                {
+                    var size = board.Size;
+                    <div id="game-board" style="--size:@size; --exit:@ExitRow">
+                        <div class="exit-lane" aria-hidden="true">
+                            <span class="exit-word">EXIT</span>
+                        </div>
+                        <div class="exit-gate" aria-hidden="true">
+                            <svg viewBox="0 0 44 64" class="exit-chevrons">
+                                <path d="M6 14 L24 32 L6 50" />
+                                <path d="M22 14 L40 32 L22 50" />
+                            </svg>
+                            <span class="exit-tag">出口</span>
+                        </div>
+                        @foreach (var vehicle in Vehicles)
+                        {
+                            var axis = vehicle.Axis == Axis.Horizontal ? "h" : "v";
+                            var target = vehicle.IsTarget ? "true" : "false";
+                            var css = vehicle.IsTarget ? "vehicle is-target" : "vehicle";
+                            var way = vehicle.Axis == Axis.Horizontal ? "左右" : "上下";
+                            var keys = vehicle.Axis == Axis.Horizontal ? "左右キー" : "上下キー";
+                            var label = $"{vehicle.Name}（{vehicle.Width}×{vehicle.Height}マス）。{way}にドラッグ、または{keys}で1マス、Shift+キーで行き止まりまで移動します。";
+                            <button type="button" class="@css" @key="vehicle.Id"
+                                    data-id="@vehicle.Id" data-x="@vehicle.X" data-y="@vehicle.Y"
+                                    data-w="@vehicle.Width" data-h="@vehicle.Height"
+                                    data-axis="@axis" data-target="@target"
+                                    disabled="@locked" aria-label="@label"
+                                    style="left:@(Css(100.0 * vehicle.X / size))%;top:@(Css(100.0 * vehicle.Y / size))%;width:@(Css(100.0 * vehicle.Width / size))%;height:@(Css(100.0 * vehicle.Height / size))%">
+                                <VehicleArt Vehicle="vehicle" />
+                            </button>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="board-placeholder" aria-hidden="true"></div>
+                }
+
+                @if (IsBusy)
+                {
+                    <div class="overlay overlay-busy">
+                        <div class="spinner" aria-hidden="true"><span></span><span></span><span></span></div>
+                        <p>@BusyMessage</p>
+                    </div>
+                }
+                @if (Won)
+                {
+                    <div class="overlay overlay-win">
+                        <div class="win-card">
+                            <p class="win-stamp">CLEAR</p>
+                            <h2>脱出成功！</h2>
+                            <dl class="win-stats">
+                                <div><dt>手数</dt><dd>@Moves</dd></div>
+                                <div><dt>タイム</dt><dd>@ElapsedText</dd></div>
+                                <div><dt>最短</dt><dd>@BestMoves</dd></div>
+                            </dl>
+                            <p class="win-verdict">
+                                @if (Moves <= BestMoves)
+                                {
+                                    <span>最短手数クリア。文句なしの完璧な捌きです。</span>
+                                }
+                                else
+                                {
+                                    <span>最短より @(Moves - BestMoves) 手。もう一度挑戦すると縮められそうです。</span>
+                                }
+                            </p>
+                            <div class="win-actions">
+                                <button type="button" class="btn btn-primary" @onclick="NewGame" disabled="@IsBusy">次のパズルへ</button>
+                                <button type="button" class="btn" @onclick="Restart" disabled="@IsBusy">同じ盤面をもう一度</button>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(SeedText))
+                            {
+                                <p class="win-note">シードが固定されています。次も同じ盤面になります。</p>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+    </main>
+
+    <footer class="footbar">
+        <span><b>ドラッグ</b>で移動</span>
+        <span><b>矢印キー</b>で1マス</span>
+        <span><b>Shift+矢印</b>で端まで</span>
+        <span><b>Esc</b>でドラッグ中止</span>
+        <span><b>Tab</b>で車を選択</span>
+        <span class="footbar-goal">赤いスポーツカーを右の<b>出口</b>へ</span>
+    </footer>
+</div>
+
+@if (ShowHelp)
+{
+    <div class="modal-backdrop" @onclick="ToggleHelp"></div>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="遊び方">
+        <div class="modal-head">
+            <h2>遊び方</h2>
+            <button type="button" class="btn btn-quiet" @onclick="ToggleHelp">閉じる</button>
+        </div>
+        <div class="modal-body">
+            <h3>目的</h3>
+            <p>赤いスポーツカーを、右端のオレンジの出口まで走らせて駐車場から脱出させます。出口の行にたどり着いて、そのまま右へ抜ければクリアです。</p>
+            <h3>動かし方</h3>
+            <p>車はそれぞれ向いている方向にしか動きません。横向きの車は左右、縦向きの車は上下だけ。ほかの車を飛び越えることはできません。車をつかんで、行き止まりまでスライドさせてください。</p>
+            <h3>キーボード</h3>
+            <p><b>Tab</b> で車を選び、<b>矢印キー</b> で1マス、<b>Shift+矢印キー</b> で行き止まりまで一気に動きます。ドラッグ中の <b>Esc</b> でその移動を取り消せます。</p>
+            <h3>盤面サイズと難易度</h3>
+            <p>盤面は 6×6 から 12×12 まで。大きくすると車が増え、トレーラーやショベルカーも登場します。難易度は「最短手数」の幅で決まります（やさしい 3〜5 手／ふつう 6〜10 手／むずかしい 11〜17 手／エキスパート 18 手以上）。</p>
+            <h3>「最短」の意味</h3>
+            <p>パネルに出る最短手数は、生成時に探索で確定させた本当の最小手数です。出口へ抜ける最後の1手も含みます。同じ手数で解ければ満点です。</p>
+            <h3>シード</h3>
+            <p>空欄ならランダムな盤面。整数を入れると、その数値に対応した盤面がいつでも再現できます。気に入った盤面のコードを控えておけば、あとでもう一度遊べます。</p>
+            <h3>ヒント</h3>
+            <p>「ヒント」を押すと、次に動かすべき車が光り、方向とマス数を教えてくれます。手数は増えないので、詰まったときは遠慮なくどうぞ。</p>
+        </div>
+    </div>
+}

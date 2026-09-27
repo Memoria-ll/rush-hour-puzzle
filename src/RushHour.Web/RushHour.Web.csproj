@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <!-- Compile the existing Razor UI into both hosts without a Windows dependency. -->
+    <RootNamespace>RushHour.Desktop</RootNamespace>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.28" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.28" PrivateAssets="all" />
+    <ProjectReference Include="../RushHour.Core/RushHour.Core.csproj" />
+    <Content Include="../RushHour.Desktop/_Imports.razor" Link="_Imports.razor" />
+    <Content Include="../RushHour.Desktop/Components/*.razor" Link="Components/%(Filename)%(Extension)" />
+    <Compile Include="../RushHour.Desktop/Components/*.cs" Link="Components/%(Filename)%(Extension)" />
+    <Content Include="../RushHour.Desktop/wwwroot/app.css" Link="wwwroot/app.css" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../RushHour.Desktop/wwwroot/drag.js" Link="wwwroot/drag.js" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
